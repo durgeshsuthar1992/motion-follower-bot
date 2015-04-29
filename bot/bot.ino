@@ -335,9 +335,24 @@
               {  serv1.write(rval);
                  serv2.write(yval);
               }
+      
 
               
-           
+              if (millis() - millis_old  >500 && digitalRead(button)== 0 )
+              { millis_old = millis();
+                i = i+1 
+                arr[i][1] = rval ;  
+                arr[i][2] = yval ; 
+                
+              }
+        
+              if (millis() - millis_old  >500 && digitalRead(button)== 1 ) 
+              {  millis_old = millis();
+                a = a+1 ;  
+                serv1.write(arr[a][1]);
+                serv2.write(arr[a][2]); 
+                
+              }
               
               
           #endif
