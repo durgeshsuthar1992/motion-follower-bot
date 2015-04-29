@@ -47,6 +47,9 @@
   #include <Servo.h> 
    
   Servo serv1,serv2;
+  int i=0,millis_old=0,a=0;
+  int button=4;
+  int arr[1000][2];
   
   #include "MPU6050_6Axis_MotionApps20.h"
   //#include "MPU6050.h" // not necessary if using MotionApps include file
@@ -172,7 +175,8 @@
       
        serv1.attach(9);  // attaches the servo on pin 9 to the servo object 
        serv2.attach(10);  
-  
+       pinMode(button,INPUT);
+      
       // initialize serial communication
       // (115200 chosen because it is required for Teapot Demo output, but it's
       // really up to you depending on your project)
@@ -313,13 +317,13 @@
               Serial.print("\t");
               Serial.println(euler[2] * 180/M_PI);
           #endif
-  
+          
           #ifdef OUTPUT_READABLE_YAWPITCHROLL
               // display Euler angles in degrees
               mpu.dmpGetQuaternion(&q, fifoBuffer);
               mpu.dmpGetGravity(&gravity, &q);
               mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-              int rval=ypr[2] * 180/M_PI;
+              int rval=ypr[2] * 180/M_PI + 40;
               int yval=ypr[0] * 180/M_PI;
               Serial.print("ypr\t");
               Serial.print(yval);
@@ -327,8 +331,15 @@
               Serial.print(ypr[1] * 180/M_PI);
               Serial.print("\t");
               Serial.println(rval);
-              serv1.write(rval);
-              serv2.write(yval);
+              if (digitalRead(button)== 0 )
+              {  serv1.write(rval);
+                 serv2.write(yval);
+              }
+
+              
+           
+              
+              
           #endif
   
           #ifdef OUTPUT_READABLE_REALACCEL
@@ -380,3 +391,4 @@
           digitalWrite(LED_PIN, blinkState);
       }
   }
+
