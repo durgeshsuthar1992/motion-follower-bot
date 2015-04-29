@@ -47,9 +47,10 @@
   #include <Servo.h> 
    
   Servo serv1,serv2;
-  int i=0,millis_old=0,a=0;
+  int i=0,j=0,millis_old=0,a=0,cnt=0,flag=0;
   int button=4;
-  int arr[1000][2];
+  int arr[2][100];
+  
   
   #include "MPU6050_6Axis_MotionApps20.h"
   //#include "MPU6050.h" // not necessary if using MotionApps include file
@@ -176,7 +177,12 @@
        serv1.attach(9);  // attaches the servo on pin 9 to the servo object 
        serv2.attach(10);  
        pinMode(button,INPUT);
-      
+       while(j<100)
+      {
+        arr[0][j]=0;
+        arr[1][j++]=0;
+      }
+
       // initialize serial communication
       // (115200 chosen because it is required for Teapot Demo output, but it's
       // really up to you depending on your project)
@@ -317,13 +323,13 @@
               Serial.print("\t");
               Serial.println(euler[2] * 180/M_PI);
           #endif
-          
+  
           #ifdef OUTPUT_READABLE_YAWPITCHROLL
               // display Euler angles in degrees
               mpu.dmpGetQuaternion(&q, fifoBuffer);
               mpu.dmpGetGravity(&gravity, &q);
               mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-              int rval=ypr[2] * 180/M_PI + 40;
+              int rval=ypr[2] * 180/M_PI+40;
               int yval=ypr[0] * 180/M_PI;
               Serial.print("ypr\t");
               Serial.print(yval);
@@ -331,29 +337,33 @@
               Serial.print(ypr[1] * 180/M_PI);
               Serial.print("\t");
               Serial.println(rval);
-              if (digitalRead(button)== 0 )
+              if (digitalRead(button)== 1 )
               {  serv1.write(rval);
                  serv2.write(yval);
               }
-      
-
-              
-              if (millis() - millis_old  >500 && digitalRead(button)== 0 )
+              //delay(5000);
+              if (millis() - millis_old  >250 && digitalRead(button)== 1 ) //training bot when button is pressed
               { millis_old = millis();
-                i = i+1 
-                arr[i][1] = rval ;  
-                arr[i][2] = yval ; 
-                
+                i = i+1 ;
+                arr[0][i] = rval ;  
+                arr[1][i] = yval ; 
+                cnt++;
+                Serial.println(cnt);
+                flag=1;
               }
-        
-              if (millis() - millis_old  >500 && digitalRead(button)== 1 ) 
+              if (millis() - millis_old  >50 && digitalRead(button)== 0 && flag==1) //imitation when button is not pressed and once bot is trained
               {  millis_old = millis();
-                a = a+1 ;  
-                serv1.write(arr[a][1]);
-                serv2.write(arr[a][2]); 
+                Serial.println("\t");
+                Serial.println(a);
+                Serial.println("\t");
+                Serial.println(i);
+                if(i>a){ 
+                serv1.write(arr[0][a]);
+                serv2.write(arr[1][a]); 
+                }
+                a++;
                 
               }
-              
               
           #endif
   
