@@ -46,10 +46,14 @@
   #include "I2Cdev.h"
   #include <Servo.h> 
    
-  Servo serv1,serv2;
+  Servo serv1,serv2,serv3;
   int i=0,j=0,millis_old=0,a=0,cnt=0,flag=0;
   int button=4;
   int arr[2][100];
+  int fle[4]={0,0,0,0};
+  int net; 
+  int sensorPin = A0;    // select the input pin for the potentiometer
+  int sensorValue = 0;
   
   
   #include "MPU6050_6Axis_MotionApps20.h"
@@ -175,7 +179,8 @@
       #endif
       
        serv1.attach(9);  // attaches the servo on pin 9 to the servo object 
-       serv2.attach(10);  
+       serv2.attach(12); 
+       serv3.attach(8); 
        pinMode(button,INPUT);
        while(j<100)
       {
@@ -337,12 +342,12 @@
               Serial.print(ypr[1] * 180/M_PI);
               Serial.print("\t");
               Serial.println(rval);
-              if (digitalRead(button)== 1 )
+              if (digitalRead(button)== 1 ) //it moves servos when it is in training mode
               {  serv1.write(rval);
                  serv2.write(yval);
               }
               //delay(5000);
-              if (millis() - millis_old  >250 && digitalRead(button)== 1 ) //training bot when button is pressed
+              if (millis() - millis_old  >250 && digitalRead(button)== 1 ) //training mode when button is pressed
               { millis_old = millis();
                 i = i+1 ;
                 arr[0][i] = rval ;  
@@ -364,6 +369,19 @@
                 a++;
                 
               }
+              //Now handling flex sensor to control uppper arm
+              sensorValue = analogRead(sensorPin);
+              //Serial.print(sensorValue);
+              Serial.print("\n "); 
+              al[0]=val[1];
+              val[1]=val[2];
+              val[2]=val[3];
+              val[3]=(sensorValue-140)/9;
+              net=(val[0]+val[1]+val[2]+val[3])/4;
+                //net= (sensorValue-140)/9;
+              serv3.write(net*18);
+              Serial.print(net*18);
+              delay(300);
               
           #endif
   
