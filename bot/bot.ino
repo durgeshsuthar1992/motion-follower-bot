@@ -49,7 +49,7 @@
   Servo serv1,serv2,serv3;
   int i=0,j=0,millis_old=0,a=0,cnt=0,flag=0;
   int button=4;
-  int arr[2][100];
+  int arr[3][100];
   int val[4]={0,0,0,0};
   int net; 
   int sensorPin = A0;    // select the input pin for the potentiometer
@@ -347,11 +347,21 @@
                  serv2.write(yval);
               }
               //delay(5000);
-              if (millis() - millis_old  >250 && digitalRead(button)== 1 ) //training mode when button is pressed
+              if (millis() - millis_old  >250 && digitalRead(button)== 1 ) //training mode when button is pressed; includes flex reading too
               { millis_old = millis();
                 i = i+1 ;
+                sensorValue = analogRead(sensorPin);
+	        val[0]=val[1];
+	        val[1]=val[2];
+	        val[2]=val[3];
+	        val[3]=(sensorValue-410)/10;
+	        net=(val[0]+val[1]+val[2]+val[3])/4;
+	        serv3.write(net*10);
+	        Serial.print("\n flex angle: ");
+	        Serial.print(net*10);
                 arr[0][i] = rval ;  
-                arr[1][i] = yval ; 
+                arr[1][i] = yval ;
+                arr[2][i] = net*10;
                 cnt++;
                 Serial.print("\n cnt: "); 
                 Serial.println(cnt);
@@ -366,23 +376,13 @@
                 if(i>a){ 
                 serv1.write(arr[0][a]);
                 serv2.write(arr[1][a]); 
+                serv3.write(arr[2][a]);
                 }
                 a++;
                 
               }
-              //Now handling flex sensor to control uppper arm
-              if(cnt%3==0){
-	              sensorValue = analogRead(sensorPin);
-	              Serial.print("\n flex angle: ");
-	              val[0]=val[1];
-	              val[1]=val[2];
-	              val[2]=val[3];
-	              val[3]=(sensorValue-410)/10;
-	              net=(val[0]+val[1]+val[2]+val[3])/4;
-	              serv3.write(net*10);
-	              Serial.print(net*10);
-	              delay(100);
-	      }
+              if(cnt==80) cnt=0;
+             
               
           #endif
   
