@@ -50,10 +50,6 @@
   int i=0,j=0,millis_old=0,a=0,cnt=0,flag=0;
   int button=4;
   int arr[3][100];
-  int val[4]={0,0,0,0};
-  int net; 
-  int sensorPin = A0;    // select the input pin for the potentiometer
-  int sensorValue = 0;
   
   
   #include "MPU6050_6Axis_MotionApps20.h"
@@ -178,14 +174,15 @@
           Fastwire::setup(400, true);
       #endif
       
-       serv1.attach(9);  // attaches the servo on pin 9 to the servo object 
-       serv2.attach(12); 
-       serv3.attach(8); 
+       serv1.attach(8);  // attaches the servo on pin 9 to the servo object 
+       serv2.attach(9); 
+       serv3.attach(10); 
        pinMode(button,INPUT);
        while(j<100)
       {
         arr[0][j]=0;
-        arr[1][j++]=0;
+        arr[1][j]=0;
+        arr[2][j++]=0;
       }
 
       // initialize serial communication
@@ -336,43 +333,43 @@
               mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
               int rval=ypr[2] * 180/M_PI+40;
               int yval=ypr[0] * 180/M_PI;
-              Serial.print("ypr\t");
-              Serial.print(yval);
-              Serial.print("\t");
-              Serial.print(ypr[1] * 180/M_PI);
-              Serial.print("\t");
-              Serial.println(rval);
+              int pval=ypr[1] * 180/M_PI;
+              if (digitalRead(button)== 0 && flag==0){
+                Serial.print("press button to start training...\n");
+                Serial.print("ypr\t");
+                Serial.print(yval);
+                Serial.print("\t");
+                Serial.print(pval);
+                Serial.print("\t");
+                Serial.println(rval);
+              }
               if (digitalRead(button)== 1 ) //it moves servos when it is in training mode
-              {  serv1.write(rval);
-                 serv2.write(yval);
+              {  serv1.write(yval);
+                 serv2.write(rval);
+                 serv3.write(pval);
+                 Serial.print("Training going on...\n");
+                 Serial.print("ypr\t");
+                 Serial.print(yval);
+                 Serial.print("\t");
+                 Serial.print(pval);
+                 Serial.print("\t");
+                 Serial.println(rval);
               }
               //delay(5000);
               if (millis() - millis_old  >250 && digitalRead(button)== 1 ) //training mode when button is pressed; includes flex reading too
               { millis_old = millis();
-                i = i+1 ;
-                sensorValue = analogRead(sensorPin);
-	        val[0]=val[1];
-	        val[1]=val[2];
-	        val[2]=val[3];
-	        val[3]=(sensorValue-410)/10;
-	        net=(val[0]+val[1]+val[2]+val[3])/4;
-	        serv3.write(net*10);
-	        Serial.print("\n flex angle: ");
-	        Serial.print(net*10);
-                arr[0][i] = rval ;  
-                arr[1][i] = yval ;
-                arr[2][i] = net*10;
-                cnt++;
-                Serial.print("\n cnt: "); 
-                Serial.println(cnt);
+                i = i+1 ;             
+	        arr[0][i] = yval ;  
+                arr[1][i] = rval ;
+                arr[2][i] = pval;
                 flag=1;
               }
-              if (millis() - millis_old  >50 && digitalRead(button)== 0 && flag==1) //imitation when button is not pressed and once bot is trained
+              if (millis() - millis_old  >100 && digitalRead(button)== 0 && flag==1) //imitation when button is not pressed and once bot is trained
               {  millis_old = millis();
+                Serial.println("imitation going on...\t");
+                Serial.println(a);
                 Serial.println("\t");
-                //Serial.println(a);
-                Serial.println("\t");
-                //Serial.println(i);
+                Serial.println(i);
                 if(i>a){ 
                 serv1.write(arr[0][a]);
                 serv2.write(arr[1][a]); 
@@ -381,7 +378,7 @@
                 a++;
                 
               }
-              if(cnt==80) cnt=0;
+              
              
               
           #endif
