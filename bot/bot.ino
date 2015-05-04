@@ -44,8 +44,10 @@
   // I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
   // for both classes must be in the include path of your project
   #include "I2Cdev.h"
+  //#include <SoftwareSerial.h>
   #include <Servo.h> 
-   
+  
+  //SoftwareSerial XBee(0, 1); 
   Servo serv1,serv2,serv3;
   int i=0,j=0,millis_old=0,a=0,cnt=0,flag=0;
   int button=4;
@@ -174,6 +176,8 @@
           Fastwire::setup(400, true);
       #endif
       
+       //XBee.begin(115200);
+       
        serv1.attach(8);  // attaches the servo on pin 9 to the servo object 
        serv2.attach(9); 
        serv3.attach(10); 
@@ -189,6 +193,7 @@
       // (115200 chosen because it is required for Teapot Demo output, but it's
       // really up to you depending on your project)
       Serial.begin(115200);
+      //Serial.begin(115200);
       while (!Serial); // wait for Leonardo enumeration, others continue immediately
   
       // NOTE: 8MHz or slower host processors, like the Teensy @ 3.3v or Ardunio
@@ -331,22 +336,28 @@
               mpu.dmpGetQuaternion(&q, fifoBuffer);
               mpu.dmpGetGravity(&gravity, &q);
               mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-              int rval=ypr[2] * 180/M_PI+40;
+              int rval=ypr[2] * 180/M_PI;
               int yval=ypr[0] * 180/M_PI;
               int pval=ypr[1] * 180/M_PI;
+              
+              // Real-time following Mode   
               if (digitalRead(button)== 0 && flag==0){
-                Serial.print("press button to start training...\n");
+                //Serial.print("press button to start training...\n");
                 Serial.print("ypr\t");
                 Serial.print(yval);
                 Serial.print("\t");
                 Serial.print(pval);
                 Serial.print("\t");
                 Serial.println(rval);
+                //delay(100);
+//                serv1.write(yval);
+//                serv2.write(rval);
+//                serv3.write(pval);
               }
-              if (digitalRead(button)== 1 ) //it moves servos when it is in training mode
-              {  serv1.write(yval);
-                 serv2.write(rval);
-                 serv3.write(pval);
+              
+              // Training Mode starts
+              if (digitalRead(button)== 1 )
+              {  
                  Serial.print("Training going on...\n");
                  Serial.print("ypr\t");
                  Serial.print(yval);
@@ -354,19 +365,24 @@
                  Serial.print(pval);
                  Serial.print("\t");
                  Serial.println(rval);
+                 serv1.write(yval);
+                 serv2.write(rval);
+                 serv3.write(pval);
               }
-              //delay(5000);
-              if (millis() - millis_old  >250 && digitalRead(button)== 1 ) //training mode when button is pressed; includes flex reading too
+             // Training mode contd.. this is to save ypr values at interval of 250 milliseconds 
+              if (millis() - millis_old  >250 && digitalRead(button)== 1 )
               { millis_old = millis();
                 i = i+1 ;             
 	        arr[0][i] = yval ;  
                 arr[1][i] = rval ;
                 arr[2][i] = pval;
-                flag=1;
+                flag=1;          // denotes that bot got trained once 
               }
-              if (millis() - millis_old  >100 && digitalRead(button)== 0 && flag==1) //imitation when button is not pressed and once bot is trained
+              
+              // Imitation Mode when button is not pressed and once bot got trained i.e flag = 1
+              if (millis() - millis_old  >100 && digitalRead(button)== 0 && flag==1 && i>a)
               {  millis_old = millis();
-                Serial.println("imitation going on...\t");
+                Serial.println("Imitation going on...\t");
                 Serial.println(a);
                 Serial.println("\t");
                 Serial.println(i);
@@ -376,10 +392,11 @@
                 serv3.write(arr[2][a]);
                 }
                 a++;
-                
               }
-              
-             
+              if(i<=a && flag==1){
+                Serial.println("\n Imitation completed...\t");
+              }
+                      
               
           #endif
   
